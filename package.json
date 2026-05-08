@@ -4,11 +4,11 @@
   "description": "Local-first schema pinning and drift checks for JSON/YAML files.",
   "type": "module",
   "bin": {
-    "schemaseal": "./dist/index.js"
+    "schemaseal": "./dist/src/index.js"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/src/index.js"
   },
   "files": [
     "dist",

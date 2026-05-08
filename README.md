@@ -20,20 +20,20 @@ npm install
 npm run build
 ```
 
-For local development, run the CLI through `node dist/index.js` after building.
+For local development, run the CLI through `node dist/src/index.js` after building.
 
 ## Quick start
 
 ```bash
 npm run build
-node dist/index.js pin examples/schemas/tool.schema.json --name tool-config
-node dist/index.js check examples/configs/good.json examples/configs/good.yaml --name tool-config --report reports/schema-report.md
+node dist/src/index.js pin examples/schemas/tool.schema.json --name tool-config
+node dist/src/index.js check examples/configs/good.json examples/configs/good.yaml --name tool-config --report reports/schema-report.md
 ```
 
 Use a schema directly without a pin:
 
 ```bash
-node dist/index.js check examples/configs/good.json \
+node dist/src/index.js check examples/configs/good.json \
   --schema examples/schemas/tool.schema.json \
   --format json \
   --report reports/schema-report.json
@@ -42,7 +42,7 @@ node dist/index.js check examples/configs/good.json \
 Fail CI on warnings as well as errors:
 
 ```bash
-node dist/index.js check examples/configs/*.json --schema examples/schemas/tool.schema.json --fail-on warning
+node dist/src/index.js check examples/configs/*.json --schema examples/schemas/tool.schema.json --fail-on warning
 ```
 
 ## Commands

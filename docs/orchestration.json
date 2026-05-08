@@ -20,7 +20,7 @@
     "npm run build",
     "npm run smoke",
     "bash scripts/validate.sh",
-    "node dist/index.js check examples/configs/good.json --schema examples/schemas/tool.schema.json --format json"
+    "node dist/src/index.js check examples/configs/good.json --schema examples/schemas/tool.schema.json --format json"
   ],
   "safety": {
     "network": "none in CLI runtime",
