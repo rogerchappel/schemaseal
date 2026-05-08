@@ -11,4 +11,4 @@ if node dist/src/index.js check examples/configs/bad.json --schema examples/sche
 fi
 grep -q "SchemaSeal Report" reports/schema-report.md
 grep -q '"failed": 0' reports/schema-report.json
-grep -q "tiny" reports/bad-report.md
+grep -q "enum_mismatch" reports/bad-report.md
