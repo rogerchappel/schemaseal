@@ -1,0 +1,31 @@
+{
+  "project": "schemaseal",
+  "repo": "rogerchappel/schemaseal",
+  "scaffold": {
+    "tool": "StackForge",
+    "template": "oss-cli",
+    "prd": "docs/PRD.md"
+  },
+  "waves": [
+    "scaffold",
+    "package-config",
+    "core-cli",
+    "fixtures-tests-smoke",
+    "docs-readiness",
+    "publish"
+  ],
+  "verification": [
+    "npm test",
+    "npm run check",
+    "npm run build",
+    "npm run smoke",
+    "bash scripts/validate.sh",
+    "node dist/index.js check examples/configs/good.json --schema examples/schemas/tool.schema.json --format json"
+  ],
+  "safety": {
+    "network": "none in CLI runtime",
+    "redactionDefault": true,
+    "deterministicReports": true,
+    "writes": ["configured pins file", "explicit --report path"]
+  }
+}
