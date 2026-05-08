@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Tool Config",
+  "type": "object",
+  "required": ["name", "version", "tools"],
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "risk"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "risk": { "type": "string", "enum": ["low", "medium", "high"] },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

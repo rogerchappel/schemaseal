@@ -1,0 +1,7 @@
+name: demo-agent-tools
+version: 1.0.0
+tools:
+  - name: read
+    risk: low
+  - name: browser
+    risk: medium

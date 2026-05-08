@@ -1,0 +1,8 @@
+{
+  "name": "demo-agent-tools",
+  "token": "ghp_123456789012345678901234567890123456",
+  "tools": [
+    { "name": "read", "risk": "tiny" },
+    { "name": "message-send" }
+  ]
+}
