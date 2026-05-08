@@ -1,21 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## 0.1.0 - 2026-05-08
 
-This project follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-format and uses semantic versioning when versioned releases are published.
-
-## [Unreleased]
-
-### Added
-
-- Initial project setup.
-
-## Release Links
-
-- Unreleased:
-  `https://github.com/rogerchappel/schemaseal/compare/...HEAD`
-- Latest release:
-  `https://github.com/rogerchappel/schemaseal/releases/latest`
-
-Replace placeholder links once the first release tag exists.
+- Initial StackForge scaffold.
+- Added `schemaseal pin` for local schema snapshots.
+- Added `schemaseal check` for JSON, YAML, JSONL, Markdown, and text inputs.
+- Added deterministic Markdown/JSON reports.
+- Added schema drift reporting against pinned hashes.
+- Added default redaction for common secrets.
+- Added fixtures, tests, smoke script, and validation docs.
