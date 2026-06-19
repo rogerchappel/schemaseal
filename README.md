@@ -93,6 +93,10 @@ npm run smoke
 bash scripts/validate.sh
 ```
 
+## Release readiness
+
+Use [docs/release-readiness.md](docs/release-readiness.md) before opening release PRs or tagging a release.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: keep the CLI local-first, fixtures tidy, reports deterministic, and safety behavior obvious.

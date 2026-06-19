@@ -9,3 +9,9 @@
 - Added schema drift reporting against pinned hashes.
 - Added default redaction for common secrets.
 - Added fixtures, tests, smoke script, and validation docs.
+
+## [Unreleased]
+
+### Added
+
+- Added a release-readiness checklist for local verification and package review.
