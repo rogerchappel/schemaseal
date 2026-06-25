@@ -7,11 +7,16 @@
     "schemaseal": "./dist/src/index.js"
   },
   "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
-    ".": "./dist/src/index.js"
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
   },
   "files": [
     "dist/src",
+    "docs",
     "examples",
     "README.md",
     "LICENSE",
@@ -38,6 +43,14 @@
   ],
   "author": "Roger Chappel",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/schemaseal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/schemaseal/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/schemaseal#readme",
   "dependencies": {
     "yaml": "^2.8.0"
   },
@@ -47,13 +60,5 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rogerchappel/schemaseal.git"
-  },
-  "bugs": {
-    "url": "https://github.com/rogerchappel/schemaseal/issues"
-  },
-  "homepage": "https://github.com/rogerchappel/schemaseal#readme"
+  }
 }
