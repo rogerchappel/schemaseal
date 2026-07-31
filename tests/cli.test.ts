@@ -1,0 +1,27 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+test('additional property violations fail by default but respect --fail-on never', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
+  context.after(() => rm(directory, { recursive: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  await writeFile(schema, JSON.stringify({ type: 'object', properties: { name: { type: 'string' } }, additionalProperties: false }));
+  await writeFile(data, JSON.stringify({ name: 'ok', unexpected: true }));
+
+  const run = (...args: string[]) => spawnSync(process.execPath, ['dist/src/index.js', 'check', data, '--schema', schema, '--format', 'json', ...args], { encoding: 'utf8' });
+  const defaultResult = run();
+  assert.equal(defaultResult.status, 1, defaultResult.stderr);
+  const report = JSON.parse(defaultResult.stdout);
+  assert.deepEqual(report.summary, { checked: 1, passed: 0, failed: 1, findings: 1, errors: 1, warnings: 0 });
+  assert.equal(report.files[0].findings[0].code, 'additional_property');
+  assert.equal(report.files[0].findings[0].severity, 'error');
+
+  const neverResult = run('--fail-on', 'never');
+  assert.equal(neverResult.status, 0, neverResult.stderr);
+  assert.deepEqual(JSON.parse(neverResult.stdout).summary, report.summary);
+});
