@@ -11,8 +11,18 @@ const schema = {
 
 test('validates required type enum and additional property findings', () => {
   const findings = validate(schema, { name: 7, risk: 'tiny', extra: true }, 'fixture.json');
-  assert.equal(findings.filter((finding) => finding.severity === 'error').length, 2);
-  assert.equal(findings.some((finding) => finding.code === 'additional_property'), true);
+  assert.equal(findings.filter((finding) => finding.severity === 'error').length, 3);
+  assert.equal(findings.find((finding) => finding.code === 'additional_property')?.severity, 'error');
+});
+
+test('treats an extra-only violation as an error', () => {
+  assert.deepEqual(validate(schema, { name: 'ok', extra: true }, 'fixture.json'), [{
+    severity: 'error',
+    code: 'additional_property',
+    file: 'fixture.json',
+    path: '$.extra',
+    message: 'Property "extra" is not declared in schema.'
+  }]);
 });
 
 test('passes a matching object', () => {

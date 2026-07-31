@@ -43,7 +43,7 @@ function validateAt(schema: JsonValue, data: JsonValue, file: string, pointer: s
     const properties = schemaObj.properties && typeof schemaObj.properties === 'object' && !Array.isArray(schemaObj.properties) ? schemaObj.properties as Record<string, JsonValue> : {};
     for (const key of Object.keys(objectData).sort()) {
       if (properties[key]) findings.push(...validateAt(properties[key], objectData[key], file, `${pointer}.${key}`));
-      else if (schemaObj.additionalProperties === false) findings.push({ severity: 'warning', code: 'additional_property', file, path: `${pointer}.${key}`, message: `Property "${key}" is not declared in schema.` });
+      else if (schemaObj.additionalProperties === false) findings.push({ severity: 'error', code: 'additional_property', file, path: `${pointer}.${key}`, message: `Property "${key}" is not declared in schema.` });
     }
   }
 
