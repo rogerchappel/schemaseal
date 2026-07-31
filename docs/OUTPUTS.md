@@ -20,3 +20,5 @@ JSON reports use stable key ordering and a fixed `generatedAt` timestamp. This k
 - `--fail-on error` exits non-zero when any error finding exists.
 - `--fail-on warning` exits non-zero when any warning or error finding exists.
 - `--fail-on never` always exits zero after producing a report.
+
+Every supported schema violation is an error finding. This includes undeclared properties when the schema sets `additionalProperties: false`, so those files are marked failed and trigger the default `--fail-on error` threshold.
