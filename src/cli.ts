@@ -42,11 +42,17 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<numbe
   if (command === 'check') {
     const files = args._.slice(1);
     if (files.length === 0) throw new Error('check requires at least one file');
-    const report = await checkFiles(files, { schemaPath: args.schema ? String(args.schema) : undefined, schemaName: args.name ? String(args.name) : undefined, configPath, redact });
     const format = String(args.format ?? 'markdown');
+    if (format !== 'markdown' && format !== 'json') {
+      throw new Error(`Unsupported --format "${format}". Expected markdown or json.`);
+    }
+    const failOn = String(args['fail-on'] ?? 'error');
+    if (failOn !== 'error' && failOn !== 'warning' && failOn !== 'never') {
+      throw new Error(`Unsupported --fail-on "${failOn}". Expected error, warning, or never.`);
+    }
+    const report = await checkFiles(files, { schemaPath: args.schema ? String(args.schema) : undefined, schemaName: args.name ? String(args.name) : undefined, configPath, redact });
     const text = format === 'json' ? renderJson(report) : renderMarkdown(report);
     await writeOutput(args.report ? String(args.report) : '-', text);
-    const failOn = String(args['fail-on'] ?? 'error');
     if (failOn === 'never') return 0;
     if (failOn === 'warning' && report.summary.findings > 0) return 1;
     if (failOn === 'error' && report.summary.errors > 0) return 1;
