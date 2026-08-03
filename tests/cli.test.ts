@@ -25,3 +25,31 @@ test('additional property violations fail by default but respect --fail-on never
   assert.equal(neverResult.status, 0, neverResult.stderr);
   assert.deepEqual(JSON.parse(neverResult.stdout).summary, report.summary);
 });
+
+test('rejects unsupported report formats', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
+  context.after(() => rm(directory, { recursive: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  await writeFile(schema, JSON.stringify({ type: 'object' }));
+  await writeFile(data, JSON.stringify({}));
+
+  const result = spawnSync(process.execPath, ['dist/src/index.js', 'check', data, '--schema', schema, '--format', 'xml'], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Unsupported --format "xml"\. Expected markdown or json\./);
+  assert.equal(result.stdout, '');
+});
+
+test('rejects unsupported failure thresholds', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
+  context.after(() => rm(directory, { recursive: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  await writeFile(schema, JSON.stringify({ type: 'object' }));
+  await writeFile(data, JSON.stringify({}));
+
+  const result = spawnSync(process.execPath, ['dist/src/index.js', 'check', data, '--schema', schema, '--fail-on', 'typo'], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Unsupported --fail-on "typo"\. Expected error, warning, or never\./);
+  assert.equal(result.stdout, '');
+});
