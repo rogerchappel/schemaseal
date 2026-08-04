@@ -25,7 +25,10 @@ function validateAt(schema: JsonValue, data: JsonValue, file: string, pointer: s
   const findings: Finding[] = [];
   const allowedTypes = schemaType(schemaObj);
   const actualType = typeOf(data);
-  if (allowedTypes && !allowedTypes.includes(actualType)) {
+  const matchesType = allowedTypes?.some((allowedType) =>
+    allowedType === actualType || (allowedType === 'integer' && actualType === 'number' && Number.isInteger(data))
+  );
+  if (allowedTypes && !matchesType) {
     findings.push({ severity: 'error', code: 'type_mismatch', file, path: pointer, message: `Expected ${allowedTypes.join(' or ')} but found ${actualType}.`, expected: allowedTypes.join('|'), actual: actualType });
     return findings;
   }
