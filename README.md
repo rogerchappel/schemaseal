@@ -83,6 +83,8 @@ Options:
 
 SchemaSeal implements a pragmatic MVP subset of JSON Schema: `type`, `required`, `properties`, `items`, `enum`, and `additionalProperties: false`. That is enough for many repo-local quality gates, but it is not a full JSON Schema validator yet.
 
+`enum` supports JSON primitives, arrays, and objects. Object property order is ignored when values are compared, while array order and primitive types remain significant.
+
 All supported schema violations are errors, including properties forbidden by `additionalProperties: false`. They make the file fail and produce a nonzero exit by default; use `--fail-on never` when a report-only check must always exit successfully.
 
 ## Verification

@@ -52,3 +52,27 @@ test('continues to accept integral and non-integral numbers as numbers', () => {
   assert.deepEqual(validate(numberSchema, 7, 'fixture.json'), []);
   assert.deepEqual(validate(numberSchema, -1.5, 'fixture.json'), []);
 });
+
+test('matches enum objects regardless of property order', () => {
+  const enumSchema = {
+    enum: [{ name: 'example', metadata: { enabled: true, labels: ['stable', 'local'] } }]
+  };
+
+  assert.deepEqual(validate(enumSchema, {
+    metadata: { labels: ['stable', 'local'], enabled: true },
+    name: 'example'
+  }, 'fixture.json'), []);
+});
+
+test('preserves array order and primitive distinctions in enum values', () => {
+  const cases = [
+    { schema: { enum: [[1, 2]] }, data: [2, 1] },
+    { schema: { enum: [{ value: 1 }] }, data: { value: '1' } },
+    { schema: { enum: [false] }, data: 0 },
+    { schema: { enum: [null] }, data: false }
+  ];
+
+  for (const { schema: enumSchema, data } of cases) {
+    assert.equal(validate(enumSchema, data, 'fixture.json')[0]?.code, 'enum_mismatch');
+  }
+});

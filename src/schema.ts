@@ -15,6 +15,26 @@ function schemaType(schema: SchemaObject): string[] | undefined {
   return undefined;
 }
 
+function jsonValuesEqual(left: JsonValue, right: JsonValue): boolean {
+  if (left === right) return true;
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return Array.isArray(left)
+      && Array.isArray(right)
+      && left.length === right.length
+      && left.every((item, index) => jsonValuesEqual(item, right[index]));
+  }
+
+  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
+    return false;
+  }
+
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  return leftKeys.length === rightKeys.length
+    && leftKeys.every((key) => Object.hasOwn(right, key) && jsonValuesEqual(left[key], right[key]));
+}
+
 export function validate(schema: JsonValue, data: JsonValue, file: string): Finding[] {
   return validateAt(schema, data, file, '$');
 }
@@ -33,7 +53,7 @@ function validateAt(schema: JsonValue, data: JsonValue, file: string, pointer: s
     return findings;
   }
 
-  if (schemaObj.enum && Array.isArray(schemaObj.enum) && !schemaObj.enum.some((item) => JSON.stringify(item) === JSON.stringify(data))) {
+  if (schemaObj.enum && Array.isArray(schemaObj.enum) && !schemaObj.enum.some((item) => jsonValuesEqual(item as JsonValue, data))) {
     findings.push({ severity: 'error', code: 'enum_mismatch', file, path: pointer, message: 'Value is not in the allowed enum set.' });
   }
 
