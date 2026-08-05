@@ -61,7 +61,7 @@ function validateAt(schema: JsonValue, data: JsonValue, file: string, pointer: s
     const objectData = data as Record<string, JsonValue>;
     const required = Array.isArray(schemaObj.required) ? schemaObj.required.filter((item): item is string => typeof item === 'string') : [];
     for (const key of required.sort()) {
-      if (!(key in objectData)) findings.push({ severity: 'error', code: 'required_missing', file, path: `${pointer}.${key}`, message: `Required property "${key}" is missing.` });
+      if (!Object.hasOwn(objectData, key)) findings.push({ severity: 'error', code: 'required_missing', file, path: `${pointer}.${key}`, message: `Required property "${key}" is missing.` });
     }
     const properties = schemaObj.properties && typeof schemaObj.properties === 'object' && !Array.isArray(schemaObj.properties) ? schemaObj.properties as Record<string, JsonValue> : {};
     for (const key of Object.keys(objectData).sort()) {

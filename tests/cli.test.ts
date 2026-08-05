@@ -26,6 +26,24 @@ test('additional property violations fail by default but respect --fail-on never
   assert.deepEqual(JSON.parse(neverResult.stdout).summary, report.summary);
 });
 
+test('reports inherited property names as missing when required', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
+  context.after(() => rm(directory, { recursive: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  await writeFile(schema, JSON.stringify({ type: 'object', required: ['toString', 'constructor'] }));
+  await writeFile(data, JSON.stringify({}));
+
+  const result = spawnSync(process.execPath, ['dist/src/index.js', 'check', data, '--schema', schema, '--format', 'json'], { encoding: 'utf8' });
+  assert.equal(result.status, 1, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.summary, { checked: 1, passed: 0, failed: 1, findings: 2, errors: 2, warnings: 0 });
+  assert.deepEqual(report.files[0].findings.map((finding: { code: string; path: string }) => [finding.code, finding.path]), [
+    ['required_missing', '$.constructor'],
+    ['required_missing', '$.toString']
+  ]);
+});
+
 test('rejects unsupported report formats', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
   context.after(() => rm(directory, { recursive: true }));
