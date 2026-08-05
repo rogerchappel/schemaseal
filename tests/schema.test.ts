@@ -29,6 +29,25 @@ test('passes a matching object', () => {
   assert.deepEqual(validate(schema, { name: 'ok', risk: 'low' }, 'fixture.json'), []);
 });
 
+test('requires own properties when names collide with Object.prototype', () => {
+  for (const key of ['toString', 'constructor']) {
+    assert.deepEqual(validate({ type: 'object', required: [key] }, {}, 'fixture.json'), [{
+      severity: 'error',
+      code: 'required_missing',
+      file: 'fixture.json',
+      path: `$.${key}`,
+      message: `Required property "${key}" is missing.`
+    }]);
+  }
+});
+
+test('accepts explicitly supplied own properties with inherited names', () => {
+  assert.deepEqual(validate({ type: 'object', required: ['toString', 'constructor'] }, {
+    toString: 'value',
+    constructor: null
+  }, 'fixture.json'), []);
+});
+
 test('accepts positive and negative integral numbers as integers', () => {
   const integerSchema = { type: 'integer' };
   assert.deepEqual(validate(integerSchema, 7, 'fixture.json'), []);
