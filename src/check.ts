@@ -2,7 +2,6 @@ import { findPin, readConfig } from './config.js';
 import { sha256File } from './crypto.js';
 import { schemaDrift } from './drift.js';
 import { parseData } from './io.js';
-import { redactValue } from './redact.js';
 import { validate } from './schema.js';
 import type { CheckOptions, CheckReport, FileCheckResult, SchemaPin } from './types.js';
 
@@ -27,7 +26,7 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
   const results: FileCheckResult[] = [];
   for (const file of [...files].sort()) {
     const raw = await sha256File(file);
-    const data = options.redact ? redactValue(parseData(raw.text, file)) : parseData(raw.text, file);
+    const data = parseData(raw.text, file);
     const findings = validate(pin.schema, data, file).sort((a, b) => `${a.file}:${a.path}:${a.code}`.localeCompare(`${b.file}:${b.path}:${b.code}`));
     results.push({ file, ok: findings.every((finding) => finding.severity !== 'error'), hash: raw.hash, bytes: raw.bytes, findings });
   }

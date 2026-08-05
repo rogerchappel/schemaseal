@@ -2,7 +2,6 @@ import path from 'node:path';
 import { readConfig, upsertPin, writeConfig } from './config.js';
 import { sha256File } from './crypto.js';
 import { parseData } from './io.js';
-import { redactValue } from './redact.js';
 import type { SchemaPin } from './types.js';
 
 export interface PinOptions {
@@ -18,7 +17,7 @@ export async function pinSchema(schemaPath: string, options: PinOptions): Promis
     name: options.name,
     schemaPath: path.relative(process.cwd(), schemaPath).split(path.sep).join('/'),
     schemaHash: file.hash,
-    schema: options.redact ? redactValue(schema) : schema,
+    schema,
     pinnedAt: '1970-01-01T00:00:00.000Z',
     schemaBytes: file.bytes,
     tool: 'schemaseal@0.1.0'
