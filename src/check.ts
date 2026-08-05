@@ -2,6 +2,7 @@ import { findPin, readConfig } from './config.js';
 import { sha256File } from './crypto.js';
 import { schemaDrift } from './drift.js';
 import { parseData } from './io.js';
+import { redactValue } from './redact.js';
 import { validate } from './schema.js';
 import type { CheckOptions, CheckReport, FileCheckResult, SchemaPin } from './types.js';
 
@@ -33,7 +34,7 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
   const drift = await schemaDrift(config.pins);
   const errors = results.flatMap((result) => result.findings).filter((finding) => finding.severity === 'error').length;
   const warnings = results.flatMap((result) => result.findings).filter((finding) => finding.severity === 'warning').length;
-  return {
+  const report: CheckReport = {
     tool: 'schemaseal',
     version: '0.1.0',
     generatedAt: '1970-01-01T00:00:00.000Z',
@@ -42,4 +43,5 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
     drift,
     summary: { checked: results.length, passed: results.filter((result) => result.ok).length, failed: results.filter((result) => !result.ok).length, findings: errors + warnings, errors, warnings }
   };
+  return options.redact ? redactValue(report) : report;
 }

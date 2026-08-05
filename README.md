@@ -55,7 +55,6 @@ Options:
 
 - `--name <name>`: stable pin name.
 - `--config <path>`: alternate pins file.
-- `--no-redact`: disable default redaction while storing the schema snapshot.
 
 ### `schemaseal check <files...>`
 
@@ -75,7 +74,7 @@ Options:
 
 - Offline by design: the CLI performs no telemetry, registry lookups, or hidden network calls.
 - Safe IO: `pin` writes only the configured pins file; `check` writes only when `--report` is provided.
-- Redaction is enabled by default for common token/key/password/private-key patterns.
+- Validation always uses the original schema and input values. Redaction is enabled by default only for report fields that match common token/key/password/private-key patterns; use `--no-redact` to emit those report fields unchanged.
 - Reports are deterministic, including fixed metadata timestamps, so diffs stay quiet.
 - Schema drift is reported by comparing local schema hashes against pins.
 

@@ -14,4 +14,4 @@ The CLI does not fetch remote schemas, upload files, call LLMs, or emit telemetr
 
 ## Redaction
 
-Redaction is enabled by default. It targets common key names and token/private-key patterns, but it is not a substitute for secret scanning. Treat reports as safer, not magically safe.
+Validation always uses the original schema and input values so redaction cannot change a result. Stored pins are exact schema snapshots because changing a schema can weaken or corrupt its constraints. Redaction is enabled by default when building reports and targets matching report fields and token/private-key patterns; `--no-redact` leaves report fields unchanged. It is not a substitute for secret scanning. Treat reports as safer, not magically safe.
