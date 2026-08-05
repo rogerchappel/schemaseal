@@ -85,6 +85,8 @@ SchemaSeal implements a pragmatic MVP subset of JSON Schema: `type`, `required`,
 
 `enum` supports JSON primitives, arrays, and objects. Object property order is ignored when values are compared, while array order and primitive types remain significant.
 
+`required` is satisfied only by an object's own properties. Names inherited from JavaScript's object prototype, such as `toString` or `constructor`, do not count as present in parsed input.
+
 All supported schema violations are errors, including properties forbidden by `additionalProperties: false`. They make the file fail and produce a nonzero exit by default; use `--fail-on never` when a report-only check must always exit successfully.
 
 ## Verification
