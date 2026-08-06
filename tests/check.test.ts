@@ -41,3 +41,19 @@ test('fails a file whose only violation is an additional property', async (conte
   assert.equal(report.files[0].ok, false);
   assert.deepEqual(report.summary, { checked: 1, passed: 0, failed: 1, findings: 1, errors: 1, warnings: 0 });
 });
+
+test('redacts report metadata without changing validation and honors no-redact', async () => {
+  const options = {
+    schemaPath: 'examples/schemas/tool.schema.json',
+    schemaName: 'token: visible-value',
+    configPath: '.schemaseal/test-pins.json'
+  };
+
+  const redacted = await checkFiles(['examples/configs/bad.json'], { ...options, redact: true });
+  const unredacted = await checkFiles(['examples/configs/bad.json'], { ...options, redact: false });
+
+  assert.equal(redacted.schema.name, 'token=<redacted>');
+  assert.equal(unredacted.schema.name, 'token: visible-value');
+  assert.deepEqual(redacted.summary, unredacted.summary);
+  assert.deepEqual(redacted.files, unredacted.files);
+});

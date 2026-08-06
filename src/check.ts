@@ -27,14 +27,14 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
   const results: FileCheckResult[] = [];
   for (const file of [...files].sort()) {
     const raw = await sha256File(file);
-    const data = options.redact ? redactValue(parseData(raw.text, file)) : parseData(raw.text, file);
+    const data = parseData(raw.text, file);
     const findings = validate(pin.schema, data, file).sort((a, b) => `${a.file}:${a.path}:${a.code}`.localeCompare(`${b.file}:${b.path}:${b.code}`));
     results.push({ file, ok: findings.every((finding) => finding.severity !== 'error'), hash: raw.hash, bytes: raw.bytes, findings });
   }
   const drift = await schemaDrift(config.pins);
   const errors = results.flatMap((result) => result.findings).filter((finding) => finding.severity === 'error').length;
   const warnings = results.flatMap((result) => result.findings).filter((finding) => finding.severity === 'warning').length;
-  return {
+  const report: CheckReport = {
     tool: 'schemaseal',
     version: '0.1.0',
     generatedAt: '1970-01-01T00:00:00.000Z',
@@ -43,4 +43,5 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
     drift,
     summary: { checked: results.length, passed: results.filter((result) => result.ok).length, failed: results.filter((result) => !result.ok).length, findings: errors + warnings, errors, warnings }
   };
+  return options.redact ? redactValue(report) : report;
 }
