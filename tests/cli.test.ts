@@ -5,6 +5,64 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
+function cli(...args: string[]) {
+  return spawnSync(process.execPath, ['dist/src/index.js', ...args], { encoding: 'utf8' });
+}
+
+test('rejects malformed options before IO', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-options-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  const config = join(directory, 'pins.json');
+  await writeFile(schema, JSON.stringify({ type: 'object' }));
+  await writeFile(data, '{}');
+
+  for (const [args, message] of [
+    [['check', data, '--schema', schema, '--bogus', 'value'], /Unknown option --bogus/],
+    [['check', data, '--schema', schema, '--schema', schema], /Option --schema may only be specified once/],
+    [['check', data, '--schema', schema, '--name', 'pin'], /--schema and --name cannot be used together/]
+  ] as const) {
+    const result = cli(...args);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, message);
+  }
+
+  for (const option of ['name', 'config', 'schema', 'format', 'report', 'fail-on']) {
+    const result = cli('check', data, `--${option}`);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, new RegExp(`Option --${option} requires a value`));
+  }
+
+  const missingName = cli('pin', schema, '--name', '--config', config);
+  assert.notEqual(missingName.status, 0);
+  assert.match(missingName.stderr, /Option --name requires a value/);
+  await assert.rejects(readFile(config), /ENOENT/);
+});
+
+test('enforces command boundaries while preserving valid forms', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-boundaries-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  const config = join(directory, 'pins.json');
+  await writeFile(schema, JSON.stringify({ type: 'object' }));
+  await writeFile(data, '{}');
+
+  const stray = cli('pin', schema, 'extra', '--config', config);
+  assert.notEqual(stray.status, 0);
+  assert.match(stray.stderr, /pin accepts exactly one schema path/);
+  await assert.rejects(readFile(config), /ENOENT/);
+
+  const wrongCommand = cli('pin', schema, '--format', 'json');
+  assert.notEqual(wrongCommand.status, 0);
+  assert.match(wrongCommand.stderr, /Option --format is not valid for pin/);
+
+  assert.equal(cli('pin', schema, '--name=fixture', '--config', config, '--no-redact').status, 0);
+  assert.equal(cli('check', data, '--name', 'fixture', '--config', config, '--format=json', '--fail-on', 'never').status, 0);
+  assert.equal(cli('check', data, '--schema', schema, '--help').status, 0);
+});
+
 test('additional property violations fail by default but respect --fail-on never', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
   context.after(() => rm(directory, { recursive: true }));

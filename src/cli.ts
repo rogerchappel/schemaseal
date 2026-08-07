@@ -6,19 +6,38 @@ import { renderJson, renderMarkdown } from './render.js';
 
 interface Args { _: string[]; [key: string]: string | boolean | string[]; }
 
+const VALUE_OPTIONS = new Set(['name', 'config', 'schema', 'format', 'report', 'fail-on']);
+const BOOLEAN_OPTIONS = new Set(['help', 'no-redact']);
+
 function parseArgs(argv: string[]): Args {
   const args: Args = { _: [] };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
     if (!token.startsWith('--')) args._.push(token);
     else {
-      const key = token.slice(2);
+      const [key, inlineValue] = token.slice(2).split('=', 2);
+      if (!VALUE_OPTIONS.has(key) && !BOOLEAN_OPTIONS.has(key)) throw new Error(`Unknown option --${key}.`);
+      if (Object.hasOwn(args, key)) throw new Error(`Option --${key} may only be specified once.`);
+      if (BOOLEAN_OPTIONS.has(key)) {
+        if (inlineValue !== undefined) throw new Error(`Option --${key} does not take a value.`);
+        args[key] = true;
+        continue;
+      }
       const next = argv[i + 1];
-      if (!next || next.startsWith('--')) args[key] = true;
+      if (inlineValue !== undefined) {
+        if (inlineValue.length === 0) throw new Error(`Option --${key} requires a value.`);
+        args[key] = inlineValue;
+      } else if (!next || next.startsWith('--')) throw new Error(`Option --${key} requires a value.`);
       else { args[key] = next; i += 1; }
     }
   }
   return args;
+}
+
+function rejectOptions(args: Args, command: string, allowed: string[]): void {
+  for (const key of Object.keys(args)) {
+    if (key !== '_' && !allowed.includes(key)) throw new Error(`Option --${key} is not valid for ${command}.`);
+  }
 }
 
 export function help(): string {
@@ -30,8 +49,10 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<numbe
   const command = args._[0];
   if (!command || command === 'help' || args.help) { process.stdout.write(help()); return 0; }
   const configPath = String(args.config ?? DEFAULT_CONFIG_PATH);
-  const redact = args.redact !== 'false' && args['no-redact'] !== true;
+  const redact = args['no-redact'] !== true;
   if (command === 'pin') {
+    rejectOptions(args, 'pin', ['name', 'config', 'no-redact']);
+    if (args._.length > 2) throw new Error('pin accepts exactly one schema path');
     const schemaPath = args._[1];
     if (!schemaPath) throw new Error('pin requires a schema path');
     const name = String(args.name ?? schemaPath);
@@ -40,8 +61,10 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<numbe
     return 0;
   }
   if (command === 'check') {
+    rejectOptions(args, 'check', ['name', 'config', 'schema', 'format', 'report', 'fail-on', 'no-redact']);
     const files = args._.slice(1);
     if (files.length === 0) throw new Error('check requires at least one file');
+    if (args.schema && args.name) throw new Error('Options --schema and --name cannot be used together.');
     const format = String(args.format ?? 'markdown');
     if (format !== 'markdown' && format !== 'json') {
       throw new Error(`Unsupported --format "${format}". Expected markdown or json.`);
