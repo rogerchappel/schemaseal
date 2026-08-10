@@ -100,7 +100,7 @@ bash scripts/validate.sh
 
 ## Release readiness
 
-Use [docs/release-readiness.md](docs/release-readiness.md) before opening release PRs or tagging a release.
+Use [docs/release-readiness.md](docs/release-readiness.md) before opening release PRs or tagging a release. The automated flow packs once, verifies npm publication in the dry run, then publishes the same provenance-bearing tarball to npm and the GitHub release after a version tag.
 
 ## Contributing
 
