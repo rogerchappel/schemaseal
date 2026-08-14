@@ -40,6 +40,10 @@ export function validate(schema: JsonValue, data: JsonValue, file: string): Find
 }
 
 function validateAt(schema: JsonValue, data: JsonValue, file: string, pointer: string): Finding[] {
+  if (schema === true) return [];
+  if (schema === false) {
+    return [{ severity: 'error', code: 'false_schema', file, path: pointer, message: 'Value is rejected by the false schema.' }];
+  }
   if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return [];
   const schemaObj = schema as SchemaObject;
   const findings: Finding[] = [];
@@ -65,12 +69,12 @@ function validateAt(schema: JsonValue, data: JsonValue, file: string, pointer: s
     }
     const properties = schemaObj.properties && typeof schemaObj.properties === 'object' && !Array.isArray(schemaObj.properties) ? schemaObj.properties as Record<string, JsonValue> : {};
     for (const key of Object.keys(objectData).sort()) {
-      if (properties[key]) findings.push(...validateAt(properties[key], objectData[key], file, `${pointer}.${key}`));
+      if (Object.hasOwn(properties, key)) findings.push(...validateAt(properties[key], objectData[key], file, `${pointer}.${key}`));
       else if (schemaObj.additionalProperties === false) findings.push({ severity: 'error', code: 'additional_property', file, path: `${pointer}.${key}`, message: `Property "${key}" is not declared in schema.` });
     }
   }
 
-  if (actualType === 'array' && schemaObj.items) {
+  if (actualType === 'array' && Object.hasOwn(schemaObj, 'items')) {
     (data as JsonValue[]).forEach((item, index) => findings.push(...validateAt(schemaObj.items as JsonValue, item, file, `${pointer}[${index}]`)));
   }
 
