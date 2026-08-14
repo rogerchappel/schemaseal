@@ -29,6 +29,50 @@ test('passes a matching object', () => {
   assert.deepEqual(validate(schema, { name: 'ok', risk: 'low' }, 'fixture.json'), []);
 });
 
+test('applies boolean schemas at the root', () => {
+  assert.deepEqual(validate(true, { any: 'value' }, 'fixture.json'), []);
+  assert.deepEqual(validate(false, { any: 'value' }, 'fixture.json'), [{
+    severity: 'error',
+    code: 'false_schema',
+    file: 'fixture.json',
+    path: '$',
+    message: 'Value is rejected by the false schema.'
+  }]);
+});
+
+test('applies boolean schemas to object properties', () => {
+  assert.deepEqual(validate({ properties: { allowed: true, blocked: false } }, {
+    allowed: 'anything',
+    blocked: 123
+  }, 'fixture.json'), [{
+    severity: 'error',
+    code: 'false_schema',
+    file: 'fixture.json',
+    path: '$.blocked',
+    message: 'Value is rejected by the false schema.'
+  }]);
+});
+
+test('applies boolean schemas to array items', () => {
+  assert.deepEqual(validate({ type: 'array', items: true }, [1, 'two'], 'fixture.json'), []);
+  assert.deepEqual(validate({ type: 'array', items: false }, [1, 'two'], 'fixture.json'), [
+    {
+      severity: 'error',
+      code: 'false_schema',
+      file: 'fixture.json',
+      path: '$[0]',
+      message: 'Value is rejected by the false schema.'
+    },
+    {
+      severity: 'error',
+      code: 'false_schema',
+      file: 'fixture.json',
+      path: '$[1]',
+      message: 'Value is rejected by the false schema.'
+    }
+  ]);
+});
+
 test('requires own properties when names collide with Object.prototype', () => {
   for (const key of ['toString', 'constructor']) {
     assert.deepEqual(validate({ type: 'object', required: [key] }, {}, 'fixture.json'), [{
