@@ -81,7 +81,7 @@ Options:
 
 ## Limitations
 
-SchemaSeal implements a pragmatic MVP subset of JSON Schema: `type`, `required`, `properties`, `items`, `enum`, and `additionalProperties: false`. That is enough for many repo-local quality gates, but it is not a full JSON Schema validator yet.
+SchemaSeal implements a pragmatic MVP subset of JSON Schema: boolean schemas (`true` accepts every value and `false` rejects every value), `type`, `required`, `properties`, `items`, `enum`, and `additionalProperties: false`. Boolean schemas have the same semantics at the document root and when nested under `properties` or `items`. That is enough for many repo-local quality gates, but it is not a full JSON Schema validator yet.
 
 `enum` supports JSON primitives, arrays, and objects. Object property order is ignored when values are compared, while array order and primitive types remain significant.
 

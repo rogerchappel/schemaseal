@@ -84,6 +84,33 @@ test('additional property violations fail by default but respect --fail-on never
   assert.deepEqual(JSON.parse(neverResult.stdout).summary, report.summary);
 });
 
+test('reports false schemas through the CLI and accepts true controls', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-boolean-schema-'));
+  context.after(() => rm(directory, { recursive: true }));
+  const data = join(directory, 'data.json');
+  await writeFile(data, JSON.stringify({ blocked: 1, list: ['value'] }));
+
+  for (const [schemaValue, expectedPaths] of [
+    [false, ['$']],
+    [{ properties: { blocked: false } }, ['$.blocked']],
+    [{ properties: { list: { type: 'array', items: false } } }, ['$.list[0]']]
+  ] as const) {
+    const schema = join(directory, `schema-${expectedPaths[0].replace(/[^a-z0-9]/gi, '_')}.json`);
+    await writeFile(schema, JSON.stringify(schemaValue));
+    const result = cli('check', data, '--schema', schema, '--format', 'json');
+    assert.equal(result.status, 1, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(report.files[0].findings.map((finding: { code: string; path: string }) => [finding.code, finding.path]),
+      expectedPaths.map((path) => ['false_schema', path]));
+  }
+
+  const trueSchema = join(directory, 'schema-true.json');
+  await writeFile(trueSchema, 'true');
+  const result = cli('check', data, '--schema', trueSchema, '--format', 'json');
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout).summary, { checked: 1, passed: 1, failed: 0, findings: 0, errors: 0, warnings: 0 });
+});
+
 test('reports inherited property names as missing when required', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
   context.after(() => rm(directory, { recursive: true }));
