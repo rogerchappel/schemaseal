@@ -111,6 +111,31 @@ test('reports false schemas through the CLI and accepts true controls', async (c
   assert.deepEqual(JSON.parse(result.stdout).summary, { checked: 1, passed: 1, failed: 0, findings: 0, errors: 0, warnings: 0 });
 });
 
+test('pins, reloads, and checks boolean schemas', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-boolean-pin-'));
+  context.after(() => rm(directory, { recursive: true }));
+  const data = join(directory, 'data.json');
+  const config = join(directory, 'pins.json');
+  await writeFile(data, '{}');
+
+  for (const schemaValue of [false, true]) {
+    const name = schemaValue ? 'allow-all' : 'deny-all';
+    const schema = join(directory, `${name}.schema.json`);
+    await writeFile(schema, JSON.stringify(schemaValue));
+
+    const pin = cli('pin', schema, '--name', name, '--config', config);
+    assert.equal(pin.status, 0, pin.stderr);
+    const stored = JSON.parse(await readFile(config, 'utf8'));
+    assert.equal(stored.pins.find((entry: { name: string }) => entry.name === name).schema, schemaValue);
+
+    const check = cli('check', data, '--name', name, '--config', config, '--format', 'json');
+    assert.equal(check.status, schemaValue ? 0 : 1, check.stderr);
+    const report = JSON.parse(check.stdout);
+    assert.deepEqual(report.files[0].findings.map((finding: { code: string }) => finding.code),
+      schemaValue ? [] : ['false_schema']);
+  }
+});
+
 test('reports inherited property names as missing when required', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-'));
   context.after(() => rm(directory, { recursive: true }));
@@ -185,7 +210,7 @@ test('malformed pins fail cleanly instead of passing validation', async (context
 
   for (const [value, message] of [
     [null, /Invalid pins file .*: \$ must be an object\./],
-    [{ version: 1, pins: [{ name: 'incomplete', schemaPath: 'missing.json', schemaHash: 'abc' }] }, /\$\.pins\[0\]\.schema must be an object/]
+    [{ version: 1, pins: [{ name: 'incomplete', schemaPath: 'missing.json', schemaHash: 'abc' }] }, /\$\.pins\[0\]\.schema must be an object or boolean/]
   ] as const) {
     await writeFile(config, JSON.stringify(value));
     const result = cli('check', data, '--config', config, '--name', 'incomplete', '--format', 'json', '--fail-on', 'never');

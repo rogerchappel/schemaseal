@@ -24,6 +24,18 @@ test('reads a complete pins file', async (context) => {
   assert.deepEqual(await readConfig(configPath), config);
 });
 
+test('reads persisted true and false schemas', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-config-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const configPath = join(directory, 'pins.json');
+
+  for (const schema of [true, false]) {
+    const config = { version: 1, pins: [{ ...validPin, schema }] };
+    await writeFile(configPath, JSON.stringify(config));
+    assert.deepEqual(await readConfig(configPath), config);
+  }
+});
+
 test('rejects null and incomplete pins with path-specific errors', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-config-'));
   context.after(() => rm(directory, { recursive: true, force: true }));
@@ -52,7 +64,9 @@ test('rejects invalid root, pin, schema, and metadata types', async (context) =>
   const cases: Array<[unknown, RegExp]> = [
     [{ version: '1', pins: [] }, /\$\.version must equal 1/],
     [{ version: 1, pins: {} }, /\$\.pins must be an array/],
-    [{ version: 1, pins: [{ ...validPin, schema: [] }] }, /\.schema must be an object/],
+    [{ version: 1, pins: [{ ...validPin, schema: null }] }, /\.schema must be an object or boolean/],
+    [{ version: 1, pins: [{ ...validPin, schema: [] }] }, /\.schema must be an object or boolean/],
+    [{ version: 1, pins: [{ ...validPin, schema: 'false' }] }, /\.schema must be an object or boolean/],
     [{ version: 1, pins: [{ ...validPin, schemaHash: 123 }] }, /\.schemaHash must be a string/],
     [{ version: 1, pins: [{ ...validPin, schemaBytes: -1 }] }, /\.schemaBytes must be a non-negative safe integer/]
   ];

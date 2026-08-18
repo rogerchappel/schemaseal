@@ -77,7 +77,7 @@ Options:
 - Validation always uses the original schema and input values. Redaction is enabled by default only for report fields that match common token/key/password/private-key patterns; use `--no-redact` to emit those report fields unchanged.
 - Reports are deterministic, including fixed metadata timestamps, so diffs stay quiet.
 - Schema drift is reported by comparing local schema hashes against pins.
-- Persisted pins are validated completely before use. A malformed config exits nonzero without producing a report and identifies the invalid JSON path (for example, `$.pins[0].schema must be an object`) so damaged or hand-edited files cannot silently pass checks.
+- Persisted pins are validated completely before use. Pin schemas may be JSON objects or the boolean schemas `true` and `false`; other values are rejected. A malformed config exits nonzero without producing a report and identifies the invalid JSON path (for example, `$.pins[0].schema must be an object or boolean`) so damaged or hand-edited files cannot silently pass checks.
 
 ## Limitations
 
