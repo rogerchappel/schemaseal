@@ -34,8 +34,8 @@ function validateConfig(value: unknown, configPath: string): asserts value is Sc
     requireString(pin.name, configPath, `${pointer}.name`);
     requireString(pin.schemaPath, configPath, `${pointer}.schemaPath`);
     requireString(pin.schemaHash, configPath, `${pointer}.schemaHash`);
-    if (pin.schema === null || typeof pin.schema !== 'object' || Array.isArray(pin.schema)) {
-      invalidConfig(configPath, `${pointer}.schema`, 'must be an object');
+    if (typeof pin.schema !== 'boolean' && (pin.schema === null || typeof pin.schema !== 'object' || Array.isArray(pin.schema))) {
+      invalidConfig(configPath, `${pointer}.schema`, 'must be an object or boolean');
     }
     requireString(pin.pinnedAt, configPath, `${pointer}.pinnedAt`);
     if (typeof pin.schemaBytes !== 'number' || !Number.isSafeInteger(pin.schemaBytes) || pin.schemaBytes < 0) {
