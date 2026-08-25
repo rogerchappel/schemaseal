@@ -221,6 +221,25 @@ test('malformed pins fail cleanly instead of passing validation', async (context
   }
 });
 
+test('direct schemas do not read or report unrelated pins', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-direct-schema-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const schema = join(directory, 'schema.json');
+  const data = join(directory, 'data.json');
+  const config = join(directory, 'pins.json');
+  await writeFile(schema, JSON.stringify({ type: 'object', required: ['name'] }));
+  await writeFile(data, JSON.stringify({ name: 'valid' }));
+  await writeFile(config, '{malformed json');
+
+  const result = cli('check', data, '--schema', schema, '--config', config, '--format', 'json');
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, '');
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.summary, { checked: 1, passed: 1, failed: 0, findings: 0, errors: 0, warnings: 0 });
+  assert.deepEqual(report.drift, []);
+});
+
 test('--no-redact preserves the same pin and validation semantics', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-no-redact-'));
   context.after(() => rm(directory, { recursive: true }));

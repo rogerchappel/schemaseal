@@ -7,19 +7,22 @@ import { validate } from './schema.js';
 import type { CheckOptions, CheckReport, FileCheckResult, SchemaPin } from './types.js';
 
 export async function checkFiles(files: string[], options: CheckOptions): Promise<CheckReport> {
-  const config = await readConfig(options.configPath);
   let pin: SchemaPin | undefined;
+  let pins: SchemaPin[] = [];
   if (options.schemaPath) {
+    const rawSchema = await sha256File(options.schemaPath);
     pin = {
       name: options.schemaName ?? options.schemaPath,
       schemaPath: options.schemaPath,
-      schemaHash: (await sha256File(options.schemaPath)).hash,
-      schema: parseData((await sha256File(options.schemaPath)).text, options.schemaPath),
+      schemaHash: rawSchema.hash,
+      schema: parseData(rawSchema.text, options.schemaPath),
       pinnedAt: '1970-01-01T00:00:00.000Z',
-      schemaBytes: (await sha256File(options.schemaPath)).bytes,
+      schemaBytes: rawSchema.bytes,
       tool: 'schemaseal@0.1.0'
     };
   } else {
+    const config = await readConfig(options.configPath);
+    pins = config.pins;
     pin = findPin(config, options.schemaName);
   }
   if (!pin) throw new Error('No schema selected. Run `schemaseal pin <schema>` or pass --schema.');
@@ -31,7 +34,7 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
     const findings = validate(pin.schema, data, file).sort((a, b) => `${a.file}:${a.path}:${a.code}`.localeCompare(`${b.file}:${b.path}:${b.code}`));
     results.push({ file, ok: findings.every((finding) => finding.severity !== 'error'), hash: raw.hash, bytes: raw.bytes, findings });
   }
-  const drift = await schemaDrift(config.pins);
+  const drift = await schemaDrift(pins);
   const errors = results.flatMap((result) => result.findings).filter((finding) => finding.severity === 'error').length;
   const warnings = results.flatMap((result) => result.findings).filter((finding) => finding.severity === 'warning').length;
   const report: CheckReport = {

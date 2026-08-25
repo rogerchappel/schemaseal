@@ -63,11 +63,11 @@ Checks JSON, YAML, JSONL, Markdown, or plain-text inputs against a pinned or dir
 Options:
 
 - `--name <pin>`: use a named pin.
-- `--schema <path>`: use a schema file directly.
+- `--schema <path>`: use a schema file directly, without reading the pins file or reporting pin drift.
 - `--format markdown|json`: report format; default is Markdown.
 - `--report <path>`: write report to a file; default is stdout.
 - `--fail-on error|warning|never`: exit threshold; default is `error`.
-- `--config <path>`: alternate pins file.
+- `--config <path>`: alternate pins file when selecting a schema with `--name`; ignored with `--schema`.
 - `--no-redact`: disable default redaction.
 
 ## Safety model
@@ -76,7 +76,7 @@ Options:
 - Safe IO: `pin` writes only the configured pins file; `check` writes only when `--report` is provided.
 - Validation always uses the original schema and input values. Redaction is enabled by default only for report fields that match common token/key/password/private-key patterns; use `--no-redact` to emit those report fields unchanged.
 - Reports are deterministic, including fixed metadata timestamps, so diffs stay quiet.
-- Schema drift is reported by comparing local schema hashes against pins.
+- Named-pin checks report schema drift by comparing local schema hashes against pins. Direct-schema checks have no pin drift entries.
 - Persisted pins are validated completely before use. Pin schemas may be JSON objects or the boolean schemas `true` and `false`; other values are rejected. A malformed config exits nonzero without producing a report and identifies the invalid JSON path (for example, `$.pins[0].schema must be an object or boolean`) so damaged or hand-edited files cannot silently pass checks.
 
 ## Limitations

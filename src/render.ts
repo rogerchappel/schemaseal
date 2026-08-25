@@ -27,7 +27,7 @@ export function renderMarkdown(report: CheckReport): string {
     lines.push('');
   }
   lines.push('## Schema Drift', '');
-  if (report.drift.length === 0) lines.push('- No pinned schemas found in config.');
+  if (report.drift.length === 0) lines.push('- No schema drift entries.');
   for (const entry of report.drift) lines.push(`- ${entry.status === 'same' ? '✅' : '⚠️'} ${entry.pinName}: ${entry.status} (${entry.schemaPath})`);
   lines.push('');
   return lines.join('\n');
