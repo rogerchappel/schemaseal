@@ -3,7 +3,7 @@ import { sha256File } from './crypto.js';
 import { schemaDrift } from './drift.js';
 import { parseData } from './io.js';
 import { redactValue } from './redact.js';
-import { validate } from './schema.js';
+import { assertSupportedSchema, validate } from './schema.js';
 import type { CheckOptions, CheckReport, FileCheckResult, SchemaPin } from './types.js';
 
 export async function checkFiles(files: string[], options: CheckOptions): Promise<CheckReport> {
@@ -26,6 +26,7 @@ export async function checkFiles(files: string[], options: CheckOptions): Promis
     pin = findPin(config, options.schemaName);
   }
   if (!pin) throw new Error('No schema selected. Run `schemaseal pin <schema>` or pass --schema.');
+  assertSupportedSchema(pin.schema);
 
   const results: FileCheckResult[] = [];
   for (const file of [...files].sort()) {
