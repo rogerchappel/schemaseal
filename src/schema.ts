@@ -1,6 +1,74 @@
 import type { Finding, JsonValue } from './types.js';
 
 type SchemaObject = Record<string, unknown>;
+const supportedTypes = new Set(['array', 'boolean', 'integer', 'null', 'number', 'object', 'string']);
+
+function schemaError(path: string, expectation: string): never {
+  throw new Error(`Invalid schema at ${path}: ${expectation}.`);
+}
+
+function assertSchemaNode(schema: unknown, path: string): void {
+  if (typeof schema === 'boolean') return;
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+    schemaError(path, 'expected an object or boolean schema');
+  }
+
+  const schemaObj = schema as SchemaObject;
+  if (Object.hasOwn(schemaObj, 'type')) {
+    const raw = schemaObj.type;
+    if (typeof raw === 'string') {
+      if (!supportedTypes.has(raw)) schemaError(`${path}.type`, `unsupported type ${JSON.stringify(raw)}`);
+    } else if (Array.isArray(raw)) {
+      if (raw.length === 0) schemaError(`${path}.type`, 'expected a non-empty array of unique supported type names');
+      const seen = new Set<string>();
+      raw.forEach((item, index) => {
+        if (typeof item !== 'string' || !supportedTypes.has(item)) {
+          schemaError(`${path}.type[${index}]`, 'expected a supported type name');
+        }
+        if (seen.has(item)) schemaError(`${path}.type[${index}]`, `duplicate type ${JSON.stringify(item)}`);
+        seen.add(item);
+      });
+    } else {
+      schemaError(`${path}.type`, 'expected a supported type name or non-empty array of unique type names');
+    }
+  }
+
+  if (Object.hasOwn(schemaObj, 'required')) {
+    if (!Array.isArray(schemaObj.required)) schemaError(`${path}.required`, 'expected an array of unique strings');
+    const seen = new Set<string>();
+    schemaObj.required.forEach((item, index) => {
+      if (typeof item !== 'string') schemaError(`${path}.required[${index}]`, 'expected a string');
+      if (seen.has(item)) schemaError(`${path}.required[${index}]`, `duplicate property name ${JSON.stringify(item)}`);
+      seen.add(item);
+    });
+  }
+
+  if (Object.hasOwn(schemaObj, 'properties')) {
+    const properties = schemaObj.properties;
+    if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
+      schemaError(`${path}.properties`, 'expected an object of schemas');
+    }
+    for (const key of Object.keys(properties).sort()) {
+      assertSchemaNode((properties as SchemaObject)[key], `${path}.properties.${key}`);
+    }
+  }
+
+  if (Object.hasOwn(schemaObj, 'items')) assertSchemaNode(schemaObj.items, `${path}.items`);
+
+  if (Object.hasOwn(schemaObj, 'enum')) {
+    if (!Array.isArray(schemaObj.enum) || schemaObj.enum.length === 0) {
+      schemaError(`${path}.enum`, 'expected a non-empty array');
+    }
+  }
+
+  if (Object.hasOwn(schemaObj, 'additionalProperties') && typeof schemaObj.additionalProperties !== 'boolean') {
+    schemaError(`${path}.additionalProperties`, 'expected a boolean');
+  }
+}
+
+export function assertSupportedSchema(schema: unknown): void {
+  assertSchemaNode(schema, '$');
+}
 
 function typeOf(value: unknown): string {
   if (value === null) return 'null';
