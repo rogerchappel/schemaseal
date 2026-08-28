@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validate } from '../src/schema.js';
+import { assertSupportedSchema, validate } from '../src/schema.js';
 
 const schema = {
   type: 'object',
@@ -138,4 +138,44 @@ test('preserves array order and primitive distinctions in enum values', () => {
   for (const { schema: enumSchema, data } of cases) {
     assert.equal(validate(enumSchema, data, 'fixture.json')[0]?.code, 'enum_mismatch');
   }
+});
+
+test('rejects malformed supported keywords with deterministic paths', () => {
+  const cases = [
+    [{ type: 42 }, '$.type'],
+    [{ type: ['string', 42] }, '$.type[1]'],
+    [{ required: 'name' }, '$.required'],
+    [{ required: ['name', 42] }, '$.required[1]'],
+    [{ properties: [] }, '$.properties'],
+    [{ items: null }, '$.items'],
+    [{ enum: 'low' }, '$.enum'],
+    [{ additionalProperties: 'no' }, '$.additionalProperties']
+  ] as const;
+
+  for (const [candidate, path] of cases) {
+    assert.throws(() => assertSupportedSchema(candidate), new RegExp(`Invalid schema at \\${path.replaceAll('.', '\\.').replaceAll('[', '\\[').replaceAll(']', '\\]')}:`));
+  }
+});
+
+test('rejects malformed nested property and item schemas', () => {
+  assert.throws(
+    () => assertSupportedSchema({ properties: { profile: { properties: { enabled: [] } } } }),
+    /Invalid schema at \$\.properties\.profile\.properties\.enabled:/
+  );
+  assert.throws(
+    () => assertSupportedSchema({ items: { required: [false] } }),
+    /Invalid schema at \$\.items\.required\[0\]:/
+  );
+});
+
+test('accepts object and boolean schemas throughout the supported subset', () => {
+  assert.doesNotThrow(() => assertSupportedSchema(true));
+  assert.doesNotThrow(() => assertSupportedSchema(false));
+  assert.doesNotThrow(() => assertSupportedSchema({
+    type: ['object', 'null'],
+    required: ['name'],
+    properties: { name: { type: 'string', enum: ['local'] }, metadata: true },
+    additionalProperties: false
+  }));
+  assert.doesNotThrow(() => assertSupportedSchema({ type: 'array', items: false }));
 });

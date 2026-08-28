@@ -255,3 +255,20 @@ test('--no-redact preserves the same pin and validation semantics', async (conte
   assert.equal(check.status, 1, check.stderr);
   assert.equal(JSON.parse(check.stdout).files[0].findings[0].code, 'type_mismatch');
 });
+
+test('malformed schemas fail without writing a passing report', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-schema-shape-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const schema = join(directory, 'invalid.schema.json');
+  const data = join(directory, 'data.json');
+  const report = join(directory, 'report.json');
+  await writeFile(schema, JSON.stringify({ properties: { name: { type: 42 } } }));
+  await writeFile(data, '{}');
+
+  const result = cli('check', data, '--schema', schema, '--format', 'json', '--report', report);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Invalid schema at \$\.properties\.name\.type:/);
+  await assert.rejects(readFile(report), /ENOENT/);
+});
