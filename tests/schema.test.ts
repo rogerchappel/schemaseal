@@ -168,6 +168,21 @@ test('rejects malformed nested property and item schemas', () => {
   );
 });
 
+test('rejects unsupported keywords at root and nested schema paths', () => {
+  assert.throws(
+    () => assertSupportedSchema({ minimum: 1 }),
+    /Invalid schema at \$\.minimum: unsupported keyword "minimum"\./
+  );
+  assert.throws(
+    () => assertSupportedSchema({ properties: { profile: { minLength: 1 } } }),
+    /Invalid schema at \$\.properties\.profile\.minLength: unsupported keyword "minLength"\./
+  );
+  assert.throws(
+    () => assertSupportedSchema({ items: { pattern: "^[a-z]+$" } }),
+    /Invalid schema at \$\.items\.pattern: unsupported keyword "pattern"\./
+  );
+});
+
 test('accepts object and boolean schemas throughout the supported subset', () => {
   assert.doesNotThrow(() => assertSupportedSchema(true));
   assert.doesNotThrow(() => assertSupportedSchema(false));
