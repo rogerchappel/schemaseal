@@ -2,6 +2,7 @@ import type { Finding, JsonValue } from './types.js';
 
 type SchemaObject = Record<string, unknown>;
 const supportedTypes = new Set(['array', 'boolean', 'integer', 'null', 'number', 'object', 'string']);
+const supportedKeywords = new Set(['$schema', 'additionalProperties', 'enum', 'items', 'properties', 'required', 'title', 'type']);
 
 function schemaError(path: string, expectation: string): never {
   throw new Error(`Invalid schema at ${path}: ${expectation}.`);
@@ -14,6 +15,11 @@ function assertSchemaNode(schema: unknown, path: string): void {
   }
 
   const schemaObj = schema as SchemaObject;
+  const unsupportedKeyword = Object.keys(schemaObj).sort().find((keyword) => !supportedKeywords.has(keyword));
+  if (unsupportedKeyword !== undefined) {
+    schemaError(`${path}.${unsupportedKeyword}`, `unsupported keyword ${JSON.stringify(unsupportedKeyword)}`);
+  }
+
   if (Object.hasOwn(schemaObj, 'type')) {
     const raw = schemaObj.type;
     if (typeof raw === 'string') {
