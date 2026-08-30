@@ -221,6 +221,23 @@ test('malformed pins fail cleanly instead of passing validation', async (context
   }
 });
 
+test('unsupported schema keywords fail before input reads or report writes', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-unsupported-schema-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const schema = join(directory, 'schema.json');
+  const missingData = join(directory, 'missing-data.json');
+  const report = join(directory, 'report.json');
+  await writeFile(schema, JSON.stringify({ properties: { name: { minLength: 2 } } }));
+
+  const result = cli('check', missingData, '--schema', schema, '--format', 'json', '--report', report);
+
+  assert.notEqual(result.status, 0);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Invalid schema at \$\.properties\.name\.minLength: unsupported keyword "minLength"\./);
+  assert.doesNotMatch(result.stderr, /ENOENT.*missing-data/);
+  await assert.rejects(readFile(report), /ENOENT/);
+});
+
 test('direct schemas do not read or report unrelated pins', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-cli-direct-schema-'));
   context.after(() => rm(directory, { recursive: true, force: true }));

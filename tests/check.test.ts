@@ -62,7 +62,7 @@ test('rejects a malformed direct schema before reading data', async (context) =>
   const directory = await mkdtemp(join(tmpdir(), 'schemaseal-invalid-direct-'));
   context.after(() => rm(directory, { recursive: true }));
   const schemaPath = join(directory, 'invalid.schema.json');
-  await writeFile(schemaPath, JSON.stringify({ properties: { name: { type: 42 } } }));
+  await writeFile(schemaPath, JSON.stringify({ properties: { name: { minLength: 2 } } }));
 
   await assert.rejects(
     checkFiles([join(directory, 'missing-data.json')], {
@@ -70,7 +70,7 @@ test('rejects a malformed direct schema before reading data', async (context) =>
       configPath: join(directory, 'pins.json'),
       redact: true
     }),
-    /Invalid schema at \$\.properties\.name\.type:/
+    /Invalid schema at \$\.properties\.name\.minLength: unsupported keyword "minLength"\./
   );
 });
 
@@ -84,7 +84,7 @@ test('rejects a malformed persisted schema before reading data', async (context)
       name: 'invalid',
       schemaPath: 'invalid.schema.json',
       schemaHash: 'abc',
-      schema: { items: { enum: 'not-an-array' } },
+      schema: { items: { minimum: 1 } },
       pinnedAt: '1970-01-01T00:00:00.000Z',
       schemaBytes: 1,
       tool: 'schemaseal@0.1.0'
@@ -97,6 +97,6 @@ test('rejects a malformed persisted schema before reading data', async (context)
       configPath,
       redact: true
     }),
-    /Invalid schema at \$\.items\.enum:/
+    /Invalid schema at \$\.items\.minimum: unsupported keyword "minimum"\./
   );
 });
