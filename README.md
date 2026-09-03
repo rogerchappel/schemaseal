@@ -59,6 +59,7 @@ Options:
 ### `schemaseal check <files...>`
 
 Checks JSON, YAML, JSONL, Markdown, or plain-text inputs against a pinned or direct schema.
+JSONL inputs may contain empty or whitespace-only lines; SchemaSeal skips them and reports malformed nonblank records with the input path and physical line number.
 
 Options:
 
