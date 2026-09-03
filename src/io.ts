@@ -11,7 +11,16 @@ export async function readDataFile(filePath: string): Promise<JsonValue> {
 export function parseData(text: string, filePath = '<input>'): JsonValue {
   const lower = filePath.toLowerCase();
   if (lower.endsWith('.jsonl')) {
-    return text.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line)) as JsonValue;
+    const records: JsonValue[] = [];
+    for (const [index, line] of text.split(/\r?\n/).entries()) {
+      if (line.trim().length === 0) continue;
+      try {
+        records.push(JSON.parse(line) as JsonValue);
+      } catch {
+        throw new Error(`Invalid JSONL record in ${filePath} at line ${index + 1}.`);
+      }
+    }
+    return records;
   }
   if (lower.endsWith('.yaml') || lower.endsWith('.yml')) return YAML.parse(text) as JsonValue;
   if (lower.endsWith('.json') || lower.endsWith('.schema')) return JSON.parse(text) as JsonValue;
